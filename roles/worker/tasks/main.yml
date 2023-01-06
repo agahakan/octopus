@@ -1,0 +1,68 @@
+- name: install jdk11
+  become: yes
+  apt:
+    update_cache: yes
+    name: openjdk-11-jdk
+    state: present
+     
+- name: Install Maven
+  become: yes
+  apt:
+    name: maven
+    state: present
+    update_cache: yes
+
+- name: Copy local worker.tar to remote poll server
+  become: yes
+  copy:
+    src: worker.tar
+    dest: /usr/local/bin/worker.tar
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0644
+
+- name: Extract worker.tar
+  become: yes
+  unarchive:
+    src: /usr/local/bin/worker.tar
+    dest: /usr/local/bin
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0777
+    remote_src: yes
+
+- name: Resolve dependencies
+  become: yes
+  command:
+    chdir: /usr/local/bin/worker
+    cmd: mvn dependency:resolve
+
+- name: Build the app
+  become: yes
+  command:
+    chdir: /usr/local/bin/worker
+    cmd: mvn package
+
+- name: Copy worker.service to remote /etc/systemd/system/
+  become: yes
+  copy:
+    src: roles/worker/files/worker.service
+    dest: /etc/systemd/system/worker.service
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0644
+
+- name: Add environment variable to worker.service
+  become: yes
+  lineinfile:
+    path: /etc/systemd/system/worker.service
+    state: present
+    regexp: '^Environment'
+    line: Environment="REDIS_HOST={{ redis_host }}" "POSTGRESQL_HOST={{ postgresql_host }}" "POSTGRESQL_PORT={{ postgresql_port }}" "POSTGRESQL_USER={{ postgresql_user }}" "POSTGRESQL_PASSWORD={{ postgresql_password }}" "POSTGRESQL_DB={{ postgresql_db }}"
+    backrefs: yes
+
+- name: Ensure worker service is running
+  become: yes
+  systemd:
+    name: worker
+    state: started

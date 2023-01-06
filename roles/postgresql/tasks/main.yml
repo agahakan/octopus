@@ -1,0 +1,83 @@
+- name: Update apt repo and cache on all Ubuntu boxes
+  become: yes
+  apt:
+    update_cache: yes
+    force_apt_get: yes
+    cache_valid_time: 3600
+        
+- name: Install required packages
+  become: yes
+  apt:
+    name:
+      - wget
+      - acl
+    state: latest
+    
+- name: Install psycopg2
+  become: yes
+  apt:
+    name: python-psycopg2
+    update_cache: yes
+
+- name: Add PostgreSQL12 repository
+  become: yes
+  apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ buster-pgdg main
+    update_cache: no
+    state: present
+
+- name: Get GPG Key
+  become: yes
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Install PostgreSQL12
+  become: yes
+  apt:
+    name: postgresql-12
+    state: present
+    update_cache: yes
+
+- name: Allow remote connection to PostgreSQL database
+  become: yes
+  copy:
+    src: roles/postgresql/files/pg_hba.conf
+    dest: /var/lib/pgsql/12/data/
+    
+      
+- name: Ensure that postgresql is started
+  become: yes
+  service:
+    name: postgresql
+    state: started
+
+- name: Create database
+  become: yes
+  become_user: postgres
+  postgresql_db:
+    name: "{{ postgresql_db }}"
+    state: present
+
+- name: Create user with limited privileges
+  become: yes
+  become_user: postgres
+  postgresql_user:
+    db: "{{ postgresql_db }}"
+    name: "{{ postgresql_user }}"
+    password: "{{ postgresql_password }}"
+    priv: ALL
+    state: present
+    
+- name: Copy sql script
+  become: yes
+  copy:
+    src: roles/postgresql/files/schema.sql
+    dest: /tmp/schema.sql
+
+- name: Create schema
+  become: true
+  become_user: postgres
+  postgresql_query:
+    db: "{{ postgresql_db }}"
+    path_to_script: /tmp/schema.sql

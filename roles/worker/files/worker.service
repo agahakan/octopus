@@ -1,0 +1,8 @@
+[Unit]
+Description=Worker
+
+[Service]
+Environment
+WorkingDirectory=/usr/local/bin/worker/target/
+ExecStart=java -jar worker-jar-with-dependencies.jar
+Restart=always

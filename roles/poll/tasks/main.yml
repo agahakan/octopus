@@ -1,0 +1,65 @@
+- name: Copy local poll.tar to remote poll server
+  become: yes
+  ansible.builtin.copy:
+    src: poll.tar
+    dest: /usr/local/bin/poll.tar
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0644
+
+- name: Extract poll.tar
+  become: yes
+  unarchive:
+    src: /usr/local/bin/poll.tar
+    dest: /usr/local/bin/
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0644
+    remote_src: yes
+
+- name: Install pip3
+  become: yes
+  apt:
+    name: python3-pip
+    update_cache: yes
+
+    
+- name: Install poll app dependencies
+  block:
+    - name: Install poll requirements
+      become: yes
+      pip:
+        executable: pip3
+        requirements: /usr/local/bin/poll/requirements.txt
+      register: command_result
+
+  rescue:
+   - debug:
+       msg: "Install poll requirements Rescue started"
+     failed_when: "command_result.msg is defined and 'Requirement already satisfied:' not in command_result.msg"
+           
+     
+ 
+- name: Copy poll.service to remote /etc/systemd/system/
+  become: yes
+  copy:
+    src: roles/poll/files/poll.service
+    dest: /etc/systemd/system/poll.service
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0644
+
+- name: Add environment variable to poll.service
+  become: yes
+  lineinfile:
+    path: /etc/systemd/system/poll.service
+    state: present
+    regexp: '^Environment'
+    line: Environment="REDIS_HOST={{ redis_host }}"
+
+
+- name: Make sure poll service is running
+  become: yes
+  systemd:
+    name: poll
+    state: started

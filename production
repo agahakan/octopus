@@ -1,0 +1,14 @@
+[frontpoll]
+poll ansible_host=ec2-3-83-17-214.compute-1.amazonaws.com ansible_connection=ssh ansible_user=admin ansible_private_key_file=~/.ssh/key.pem
+
+[frontresult]
+result ansible_host=ec2-35-170-55-15.compute-1.amazonaws.com ansible_connection=ssh ansible_user=admin ansible_private_key_file=~/.ssh/key.pem
+
+[dbredis]
+redis ansible_host=ec2-3-92-62-205.compute-1.amazonaws.com ansible_connection=ssh ansible_user=admin ansible_private_key_file=~/.ssh/key.pem
+
+[dbpostgres]
+postgres ansible_host=ec2-44-202-187-50.compute-1.amazonaws.com ansible_connection=ssh ansible_user=admin ansible_private_key_file=~/.ssh/key.pem
+
+[back]
+worker ansible_host=ec2-34-231-169-198.compute-1.amazonaws.com ansible_connection=ssh ansible_user=admin ansible_private_key_file=~/.ssh/key.pem

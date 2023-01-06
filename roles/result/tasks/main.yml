@@ -1,0 +1,53 @@
+- name: Install node & npm
+  become: yes
+  apt:
+    name: ["nodejs","npm"]
+    update_cache: yes
+
+- name: Copy local result.tar to remote frontresult server
+  become: yes
+  copy:
+    src: result.tar
+    dest: /usr/local/bin/result.tar
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0644
+
+- name: Extract result.tar
+  become: yes
+  unarchive:
+    src: /usr/local/bin/result.tar
+    dest: /usr/local/bin
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0644
+    remote_src: yes
+
+- name: Install packages based on package.json
+  become: yes
+  npm:
+    path: /usr/local/bin/result
+
+- name: Copy result.service to remote /etc/systemd/system/
+  become: yes
+  copy:
+    src: roles/result/files/result.service
+    dest: /etc/systemd/system/result.service
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0644
+
+- name: Add environment variable to result.service
+  become: yes
+  lineinfile:
+    path: /etc/systemd/system/result.service
+    state: present
+    regexp: '^Environment'
+    line: Environment="PORT={{ port }}" "POSTGRESQL_HOST={{ postgresql_host }}" "POSTGRESQL_PORT={{ postgresql_port }}" "POSTGRESQL_USER={{ postgresql_user }}" "POSTGRESQL_PASSWORD={{ postgresql_password }}" "POSTGRESQL_DB={{ postgresql_db }}"
+    backrefs: yes
+
+- name: Ensure result service is running
+  become: yes
+  systemd:
+    name: result
+    state: started

@@ -1,0 +1,8 @@
+[Unit]
+Description=Poll web application
+
+[Service]
+Environment
+WorkingDirectory=/usr/local/bin/result/
+ExecStart=npm start
+Restart=always

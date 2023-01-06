@@ -1,0 +1,37 @@
+- 
+  name: Install essential packages and configure instance
+  hosts: all
+  roles:
+    - base
+
+-
+  name: Deploy poll service
+  hosts: frontpoll
+  environment:
+    REDIS_HOST: "{{ redis_host }}"
+  roles:
+    - poll
+
+- 
+  name: Deploy redis database
+  hosts: dbredis
+  roles:
+    - redis
+
+- 
+  name: Deploy worker service
+  hosts: back
+  roles:
+    - worker
+
+-
+  name: Deploy postgres database
+  hosts: dbpostgres
+  roles:
+    - postgresql
+
+-
+  name: Deploy result service
+  hosts: frontresult
+  roles:
+    - result
