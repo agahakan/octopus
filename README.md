@@ -9,6 +9,7 @@ PostgreSQL database and displays the results.
 With Ansible, we deploy  the application onto 5 different machines, without using containers.
 
 ## use / start
+Configure your machines and set up the production file.
 ```
 export ANSIBLE_VAULT_PASSWORD_FILE=/tmp/.vault_pass
 echo verySecretPassword > /tmp/.vault_pass
